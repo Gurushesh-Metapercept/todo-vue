@@ -1,17 +1,15 @@
 <template>
-  <div
-    class="d-flex justify-center ma-4 custom_card"
-    v-for="todo in todos"
-    :key="todo.title"
-  >
-    <v-card class="custom__card" width="350" outlined>
+  <div class="ma-4 custom_card" v-for="todo in todosList" :key="todo.title">
+    <v-card class="custom__card d-block" width="350" height="auto" outlined>
       <v-card-title>{{ todo.title }}</v-card-title>
       <v-card-text>
         {{ todo.task }}
       </v-card-text>
       <v-card-actions>
-        <v-btn text color="primary">Edit</v-btn>
-        <v-btn text>Delete</v-btn>
+        <!-- <v-btn text color="primary">Edit</v-btn> -->
+        <v-btn icon color="red" @click="deleteTodo(todo.id)">
+          <v-icon>mdi-delete</v-icon>
+        </v-btn>
       </v-card-actions>
     </v-card>
   </div>
@@ -22,7 +20,18 @@ export default {
   // eslint-disable-next-line vue/multi-word-component-names
   name: "Card",
   props: {
-    todos: Array,
+    todosList: Array,
+  },
+  methods: {
+    deleteTodo() {
+      console.log("asd");
+    },
+  },
+
+  mounted() {
+    console.log(this.todosList);
+
+    console.log("from updated");
   },
 };
 </script>

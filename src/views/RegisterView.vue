@@ -7,27 +7,30 @@
         :rules="rules"
         hide-details="auto"
         class="mb-2"
-        v-bind="name"
+        v-model="name"
       ></v-text-field>
       <v-text-field
         label="example@gmail.com"
         :rules="rules"
         hide-details="auto"
         class="mb-2"
-        v-bind="email"
+        v-model="email"
       ></v-text-field>
-      <v-text-field label="Password" v-bind="password"></v-text-field>
+      <v-text-field label="Password" v-model="password"></v-text-field>
     </div>
-
     <v-card-actions>
+      <span>{{ this.err_message ? this.err_message : "" }}</span>
       <v-btn elevation="1" @click="register">Register</v-btn>
     </v-card-actions>
   </v-card>
 </template>
  
  <script>
-import { createUserWithEmailAndPassword } from "@firebase/auth";
+// import { createUserWithEmailAndPassword } from "@firebase/auth";
+// import { auth } from "../firebase/init";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase/init";
+import router from "@/router";
 
 export default {
   // eslint-disable-next-line vue/multi-word-component-names
@@ -37,6 +40,7 @@ export default {
       name: "",
       email: "",
       password: "",
+      err_message: "",
     };
   },
   methods: {
@@ -44,10 +48,16 @@ export default {
       createUserWithEmailAndPassword(auth, this.email, this.password)
         .then((credential) => {
           console.log(credential);
+          console.log(this.email, this.password);
+          router.push("/");
         })
         .catch((err) => {
           console.log(err.message);
+          this.err_message = err.message;
         });
+    },
+    clickHandler() {
+      console.log(this.email, this.password);
     },
   },
 };

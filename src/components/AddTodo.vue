@@ -6,7 +6,7 @@
       hide-details="auto"
       class="mb-2 w-75"
     ></v-text-field>
-    <v-btn color="indigo" class="ml-2"> Validate </v-btn>
+    <v-btn color="indigo" class="ml-2"> Add </v-btn>
   </v-card>
 </template>
 
@@ -17,13 +17,4 @@ export default {
 </script>
 
 <style>
-.addInput {
-  min-width: 800px;
-  margin: 0 auto;
-  margin: 0 auto;
-  margin-top: 7rem;
-  background: #9c9292;
-  padding: 2rem;
-  display: flex;
-}
 </style>
