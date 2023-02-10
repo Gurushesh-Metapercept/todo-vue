@@ -11,12 +11,29 @@
 </template>
 
 <script>
+import { useRouter } from "vue-router";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { onBeforeMount } from "vue";
+
 export default {
   name: "App",
 
-  data: () => ({
-    //
-  }),
+  setup() {
+    const router = useRouter();
+    // const route = useRoute();
+    const auth = getAuth();
+
+    onBeforeMount(() => {
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          router.replace("/");
+          console.log("user is not logged in...");
+        } else {
+          console.log("logged user is :- " + user.email);
+        }
+      });
+    });
+  },
 };
 </script>
 

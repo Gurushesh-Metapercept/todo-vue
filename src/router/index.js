@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import RegisterView from '../views/RegisterView'
 import TaskView from "../views/TaskView"
 
+
 const routes = [
   {
     path: '/',

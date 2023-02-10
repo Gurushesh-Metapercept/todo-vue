@@ -1,14 +1,12 @@
 <template>
   <v-app-bar app color="indigo" dark flat class="px-12">
     <v-btn>
-      <span>TODO</span>
+      <router-link to="/">TODO</router-link>
     </v-btn>
     <v-spacer></v-spacer>
-    <router-link to="/addtodo">
-      <v-btn class="white--text" rounded to="/AddTodo"> Add Todo </v-btn>
-    </router-link>
+
     <router-link to="/logout">
-      <v-btn class="white--text" rounded to="/logout" @click="handleLogOut">
+      <v-btn class="white--text" rounded to="/" @click="handleLogOut">
         Logout
       </v-btn>
     </router-link>
@@ -16,6 +14,7 @@
 </template>
 
 <script>
+import { getAuth, signOut } from "firebase/auth";
 export default {
   // eslint-disable-next-line vue/multi-word-component-names
   name: "Header",
@@ -25,7 +24,16 @@ export default {
     };
   },
   methods: {
-    handleLogOut() {},
+    handleLogOut() {
+      const auth = getAuth();
+      signOut(auth)
+        .then(() => {
+          console.log("logged out");
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    },
   },
 };
 </script>

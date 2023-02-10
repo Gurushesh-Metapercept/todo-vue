@@ -1,55 +1,65 @@
 <template>
   <v-app>
+    <!-- Header  -->
     <Header />
-    <!-- <AddTodo /> -->
+    <!--  Add TODO Button  -->
     <div class="wrapper">
-      <v-card class="mx-auto py-10" max-width="800">
-        <v-row class="d-flex mx-auto justify-center align-center">
-          <v-col cols="4">
-            <v-text-field
-              label="Title"
-              :rules="rules"
-              hide-details="auto"
-              class="mb-2"
-              v-model="newTodo"
-              @keyup.enter="addTodo"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="4">
-            <v-text-field
-              label="Task"
-              :rules="rules"
-              hide-details="auto"
-              class="mb-2"
-              v-model="newTask"
-              @keyup.enter="addTodo"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="1">
-            <v-btn color="indigo" class="ml-2 custom_btn" @click="addTodo">
+      <v-container class="my-auto">
+        <v-col cols="8" class="mx-auto d-flex justify-end">
+          <v-btn color="primary" @click="compose({})">Add Todo</v-btn>
+        </v-col>
+      </v-container>
+
+      <!-- Pop Up Component for Adding Todo -->
+      <v-dialog v-model="dialogCompose" width="500">
+        <v-card>
+          <v-card-title class="headline black" primary-title>
+            Add your todo
+          </v-card-title>
+          <v-card-text class="pa-5">
+            <v-form>
+              <v-text-field
+                label="Title *"
+                :rules="rules"
+                hide-details="auto"
+                class="mb-2"
+                v-model="newTodo"
+                @keyup.enter="addTodo"
+              ></v-text-field>
+              <v-textarea
+                outlined
+                name="input-7-4"
+                label="Task *"
+                v-model="newTask"
+                :rules="rules"
+                @keyup.enter="addTodo"
+              ></v-textarea>
+              <ErrorMessage :err_show="err_show" :err_message="err_message" />
+            </v-form>
+          </v-card-text>
+          <v-card-actions class="pa-5">
+            <v-btn class="ml-auto" @click="cancelPop()" outlined color="red"
+              >Cancel</v-btn
+            >
+
+            <v-btn color="indigo" class="custom_btn" @click="addTodo">
               Add
             </v-btn>
-          </v-col>
-        </v-row>
-      </v-card>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </div>
-    <v-row v-if="err_show" class="custom_error">
-      <v-col cols="3" class="mx-auto">
-        <v-alert dense outlined type="error">
-          {{ this.err_message }}
-        </v-alert>
-      </v-col>
-    </v-row>
-    <v-row v-if="success_show" class="custom_error">
-      <v-col cols="3" class="mx-auto">
-        <v-alert dense text type="success">
-          {{ this.err_message }}
-        </v-alert>
-      </v-col>
-    </v-row>
+    <!-- Erro Message Component  -->
+    <ErrorMessage :success_show="success_show" :err_message="err_message" />
 
+    <!-- Todo Card Component  -->
     <v-card class="mx-auto d-flex justify-center flex-wrap" flat>
-      <Card :todosList="todosList" />
+      <v-progress-circular
+        v-if="loading"
+        indeterminate
+        color="primary"
+      ></v-progress-circular>
+      <Card v-else :todosList="todosList" />
     </v-card>
   </v-app>
 </template>
@@ -57,14 +67,16 @@
 <script>
 import Header from "@/components/Header.vue";
 import Card from "../components/Card.vue";
+import ErrorMessage from "@/components/ErrorMessage.vue";
 
 import { db } from "../firebase/init";
-import { collection, addDoc, getDocs } from "firebase/firestore";
+import { collection, addDoc, onSnapshot } from "firebase/firestore";
 
 export default {
   components: {
     Header,
     Card,
+    ErrorMessage,
   },
   data() {
     return {
@@ -74,11 +86,13 @@ export default {
       err_show: false,
       success_show: false,
       err_message: "",
+      dialogCompose: false,
+      loading: true,
     };
   },
   methods: {
     async addTodo() {
-      console.log("cked");
+      console.log("add todo function");
       if (this.newTodo != "" && this.newTask != "") {
         // this.todosList.push({ title: this.newTodo, task: this.newTask });
         await addDoc(collection(db, "todos"), {
@@ -87,28 +101,38 @@ export default {
         });
         this.newTodo = "";
         this.newTask = "";
-        this.err_message = "New todo added";
+        this.err_message = "New todo created ✨";
         this.err_show = false;
         this.success_show = true;
+        this.dialogCompose = false;
       } else if (
         (this.newTodo != "" && this.newTask == "") ||
         (this.newTodo == "" && this.newTask != "") ||
         (this.newTask == "" && this.newTodo == "")
       ) {
-        this.err_message = "please fill all the fields";
+        this.err_message = "Please complete all required fields 😒";
         this.success_show = false;
         this.err_show = true;
       }
     },
+    compose() {
+      this.dialogCompose = true;
+    },
+    cancelPop() {
+      this.dialogCompose = false;
+    },
   },
   async mounted() {
-    const colRef = collection(db, "todos");
-    const docsSnap = await getDocs(colRef);
-    console.log("from mounted");
-    // console.log(docsSnap.docs);
-    this.todosList = docsSnap.docs;
-    docsSnap.forEach((doc) => {
-      console.log(doc.data());
+    onSnapshot(collection(db, "todos"), (snapshot) => {
+      const tt = [];
+      snapshot.forEach((doc) => {
+        const todoz = {
+          ...doc.data(),
+          id: doc.id,
+        };
+        tt.push(todoz);
+      });
+      (this.loading = false), (this.todosList = tt);
     });
   },
 };
