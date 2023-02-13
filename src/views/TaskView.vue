@@ -6,7 +6,7 @@
     <div class="wrapper">
       <v-container class="my-auto">
         <v-col cols="8" class="mx-auto d-flex justify-end">
-          <v-btn color="primary" @click="compose({})">Add Todo</v-btn>
+          <v-btn color="indigo" @click="compose({})">Add Todo</v-btn>
         </v-col>
       </v-container>
 
@@ -53,14 +53,14 @@
     <ErrorMessage :success_show="success_show" :err_message="err_message" />
 
     <!-- Todo Card Component  -->
-    <v-card class="mx-auto d-flex justify-center flex-wrap" flat>
-      <v-progress-circular
-        v-if="loading"
-        indeterminate
-        color="primary"
-      ></v-progress-circular>
-      <Card v-else :todosList="todosList" />
-    </v-card>
+
+    <v-progress-circular
+      v-if="loading"
+      indeterminate
+      color="primary"
+      class="mx-auto"
+    ></v-progress-circular>
+    <Card v-else :todosList="todosList" />
   </v-app>
 </template>
 
@@ -69,8 +69,9 @@ import Header from "@/components/Header.vue";
 import Card from "../components/Card.vue";
 import ErrorMessage from "@/components/ErrorMessage.vue";
 
-import { db } from "../firebase/init";
+import { auth, db } from "../firebase/init";
 import { collection, addDoc, onSnapshot } from "firebase/firestore";
+import { onAuthStateChanged } from "@firebase/auth";
 
 export default {
   components: {
@@ -88,6 +89,7 @@ export default {
       err_message: "",
       dialogCompose: false,
       loading: true,
+      displayEmail: "",
     };
   },
   methods: {
@@ -133,6 +135,18 @@ export default {
         tt.push(todoz);
       });
       (this.loading = false), (this.todosList = tt);
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const uid = user;
+        console.log("uid == " + uid);
+        console.log(user.providerUserInfo);
+        // ...
+      } else {
+        // User is signed out
+        // ...
+      }
     });
   },
 };

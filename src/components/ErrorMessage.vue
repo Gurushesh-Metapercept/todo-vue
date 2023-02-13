@@ -6,8 +6,8 @@
       </v-alert>
     </v-col>
   </v-row>
-  <v-row v-if="success_show" class="custom_error">
-    <v-col cols="3" class="mx-auto">
+  <v-row v-if="success_show" class="mx-auto custom_error">
+    <v-col>
       <v-alert dense text type="success">
         {{ this.err_message }}
       </v-alert>

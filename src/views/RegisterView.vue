@@ -1,27 +1,47 @@
 <template>
   <v-card class="mx-auto py-10 px-10 mt-10" max-width="500" outlined>
     <ErrorMessage :err_show="err_show" :err_message="err_message" />
-    <div>
+    <v-form v-model="formValidation">
       <v-card-title>Register</v-card-title>
       <v-text-field
-        label="Name"
-        :rules="rules"
-        hide-details="auto"
-        class="mb-2"
-        v-model="name"
-      ></v-text-field>
-      <v-text-field
-        label="example@gmail.com"
-        :rules="rules"
-        hide-details="auto"
-        class="mb-2"
         v-model="email"
+        :rules="emailRules"
+        :error-messages="errorMessages"
+        label="Email"
+        placeholder="example@gmail.com"
+        required
       ></v-text-field>
-      <v-text-field label="Password" v-model="password"></v-text-field>
-    </div>
-    <v-card-actions>
-      <v-btn elevation="1" @click="register">Register</v-btn>
-    </v-card-actions>
+
+      <v-text-field
+        class="text__Field"
+        v-model="password"
+        :append-inner-icon="showPass ? 'mdi-eye' : 'mdi-eye-off'"
+        :rules="[rules.required, rules.min]"
+        :type="showPass ? 'text' : 'password'"
+        label="Password"
+        hint="At least 6 characters"
+        counter
+        @click:append-inner="showPass = !showPass"
+      ></v-text-field>
+
+      <v-text-field
+        class="text__Field"
+        v-model="confirmPassword"
+        :append-inner-icon="showConPass ? 'mdi-eye' : 'mdi-eye-off'"
+        :rules="conPass"
+        :type="showConPass ? 'text' : 'password'"
+        label="Confirm Password"
+        hint="At least 6 characters"
+        counter
+        @click:append-inner="showConPass = !showConPass"
+      ></v-text-field>
+
+      <v-card-actions>
+        <v-btn :disabled="!formValidation" elevation="1" @click="register"
+          >Register</v-btn
+        >
+      </v-card-actions>
+    </v-form>
   </v-card>
 </template>
  
@@ -41,21 +61,44 @@ export default {
   },
   data() {
     return {
-      name: "",
       email: "",
       password: "",
+      confirmPassword: "",
       err_message: "",
+      errorMessages: "",
       err_show: false,
+      showPass: false,
+      formValidation: false,
+      showConPass: false,
+      rules: {
+        required: (value) => !!value || "Required is requred.",
+        min: (v) => v.length >= 6 || "Min 6 characters",
+      },
+      conPass: [
+        (v) => !!v || "Required is requred.",
+        (v) => v === this.password || "Passwords do not match",
+      ],
+      emailRules: [
+        (value) => {
+          if (value) return true;
+
+          return "E-mail is requred.";
+        },
+        (value) => {
+          if (/.+@.+\..+/.test(value)) return true;
+
+          return "E-mail must be valid.";
+        },
+      ],
     };
   },
   methods: {
     register() {
       createUserWithEmailAndPassword(auth, this.email, this.password)
         .then((credential) => {
-          console.log(credential);
-          console.log(this.email, this.password);
-          router.push("/");
           this.err_show = false;
+          console.log(credential);
+          router.push("/");
         })
         .catch((err) => {
           console.log(err.message);
@@ -63,12 +106,9 @@ export default {
           this.err_show = true;
         });
     },
-    clickHandler() {
-      console.log(this.email, this.password);
-    },
   },
 };
 </script>
  
- <style>
+ <style scoped>
 </style>
