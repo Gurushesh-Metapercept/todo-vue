@@ -78,13 +78,12 @@ export default {
       ],
     };
   },
+
   methods: {
     login() {
       signInWithEmailAndPassword(auth, this.email, this.password)
-        .then((credential) => {
+        .then(() => {
           this.err_show = false;
-          console.log(credential);
-          console.log(this.email, this.password);
           console.log("login successfull..");
           router.push("/alltodos");
         })

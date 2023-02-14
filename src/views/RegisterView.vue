@@ -35,7 +35,9 @@
         counter
         @click:append-inner="showConPass = !showConPass"
       ></v-text-field>
-
+      <div class="ms-4 text-end">
+        <router-link to="/">Want to login?</router-link>
+      </div>
       <v-card-actions>
         <v-btn :disabled="!formValidation" elevation="1" @click="register"
           >Register</v-btn
@@ -43,6 +45,15 @@
       </v-card-actions>
     </v-form>
   </v-card>
+  <!-- notification -->
+  <v-snackbar v-model="snackbar" :timeout="2000" color="success">
+    {{ this.err_message }}
+    <template v-slot:actions>
+      <v-btn color="white" variant="text" @click="snackbar = false">
+        Close
+      </v-btn>
+    </template>
+  </v-snackbar>
 </template>
  
  <script>
@@ -66,10 +77,12 @@ export default {
       confirmPassword: "",
       err_message: "",
       errorMessages: "",
+      message: "",
       err_show: false,
       showPass: false,
       formValidation: false,
       showConPass: false,
+      snackbar: false,
       rules: {
         required: (value) => !!value || "Required is requred.",
         min: (v) => v.length >= 6 || "Min 6 characters",
@@ -98,6 +111,8 @@ export default {
         .then((credential) => {
           this.err_show = false;
           console.log(credential);
+          this.snackbar = true;
+          this.err_message = "Account successfully created...✨";
           router.push("/");
         })
         .catch((err) => {

@@ -5,9 +5,11 @@
     <!--  Add TODO Button  -->
     <div class="wrapper">
       <v-container class="my-auto">
-        <v-col cols="8" class="mx-auto d-flex justify-end">
-          <v-btn color="indigo" @click="compose({})">Add Todo</v-btn>
-        </v-col>
+        <v-row>
+          <v-btn class="mx-auto" color="indigo" @click="compose({})"
+            >Add Todo</v-btn
+          >
+        </v-row>
       </v-container>
 
       <!-- Pop Up Component for Adding Todo -->
@@ -61,6 +63,16 @@
       class="mx-auto"
     ></v-progress-circular>
     <Card v-else :todosList="todosList" />
+
+    <!-- notification -->
+    <v-snackbar v-model="snackbar" :timeout="2000" color="success">
+      {{ this.err_message }}
+      <template v-slot:actions>
+        <v-btn color="white" variant="text" @click="snackbar = false">
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-app>
 </template>
 
@@ -72,8 +84,6 @@ import ErrorMessage from "@/components/ErrorMessage.vue";
 import { auth, db } from "../firebase/init";
 import { collection, addDoc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged } from "@firebase/auth";
-import { toast } from "vue3-toastify";
-import "vue3-toastify/dist/index.css";
 
 export default {
   components: {
@@ -87,21 +97,15 @@ export default {
       newTodo: "",
       newTask: "",
       err_show: false,
-      success_show: false,
+      // success_show: false,
       err_message: "",
       dialogCompose: false,
       loading: true,
       displayEmail: "",
+      snackbar: false,
     };
   },
-  setup() {
-    const notify = (msg) => {
-      toast.success(msg, {
-        autoClose: 1000,
-      }); // ToastOptions
-    };
-    return { notify };
-  },
+
   methods: {
     async addTodo() {
       console.log("add todo function");
@@ -113,11 +117,11 @@ export default {
         });
         this.newTodo = "";
         this.newTask = "";
-        // this.err_message = "New todo created ✨";
-        this.err_show = false;
         // this.success_show = true;
+        this.err_show = false;
         this.dialogCompose = false;
-        this.notify("New todo created...😉");
+        this.snackbar = true;
+        this.err_message = "New todo created ✨";
       } else if (
         (this.newTodo != "" && this.newTask == "") ||
         (this.newTodo == "" && this.newTask != "") ||
@@ -136,6 +140,8 @@ export default {
     },
   },
   async mounted() {
+    let currentUser = localStorage.getItem("currentUser");
+    console.log("currentUser" + currentUser);
     onSnapshot(collection(db, "todos"), (snapshot) => {
       const tt = [];
       snapshot.forEach((doc) => {
@@ -150,15 +156,18 @@ export default {
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        const uid = user;
-        console.log("uid == " + uid);
-        console.log(user.providerUserInfo);
-        // ...
+        console.log("uid == " + user.uid);
+        console.log(user);
       } else {
         // User is signed out
         // ...
       }
     });
+  },
+  created() {
+    setTimeout(() => {
+      this.success_show = false;
+    }, 100);
   },
 };
 </script>

@@ -1,67 +1,40 @@
 <template>
+  <v-snackbar v-model="snackbar" :timeout="2000" color="success">
+    {{ this.err_message }}
+    <template v-slot:actions>
+      <v-btn color="white" variant="text" @click="snackbar = false">
+        Close
+      </v-btn>
+    </template>
+  </v-snackbar>
   <v-container>
-    <div class="cards">
-      <v-card
-        class="
-          d-block
-          mx-auto
-          d-flex
-          flex-column
-          justify-space-between
-          customCard
-        "
-        width="350"
-        height="auto"
-        max-width="350px"
-        outlined
+    <v-row style="max-width: 1200px" class="mx-auto">
+      <v-col
+        h-screen
         v-for="todo in todosList"
         :key="todo.title"
+        cols="12"
+        sm="4"
       >
-        <v-card-title class="text-wrap">{{ todo.title }}</v-card-title>
-        <v-card-text>
-          {{ todo.task }}
-        </v-card-text>
-        <v-card-actions>
-          <v-btn
-            icon
-            color="indigo"
-            @click="editTodo(todo.id, todo.title, todo.task)"
-          >
-            <v-icon>mdi-pen</v-icon>
-          </v-btn>
-          <v-btn icon color="red" @click="deleteTodo(todo.id)">
-            <v-icon>mdi-delete</v-icon>
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </div>
+        <v-card>
+          <v-card-title class="text-wrap">{{ todo.title }}</v-card-title>
+          <v-card-text> {{ todo.task }} </v-card-text>
+          <v-card-actions>
+            <v-btn
+              icon
+              color="indigo"
+              @click="editTodo(todo.id, todo.title, todo.task)"
+            >
+              <v-icon>mdi-pen</v-icon>
+            </v-btn>
+            <v-btn icon color="red" @click="deleteTodo(todo.id)">
+              <v-icon>mdi-delete</v-icon>
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-col>
+    </v-row>
   </v-container>
-  <!-- <v-card
-    class="mx-auto d-flex justify-center flex-wrap"
-    max-width="1200px"
-    flat
-  >
-    <div class="ma-4 custom_card" v-for="todo in todosList" :key="todo.title">
-      <v-card class="d-block" width="350" height="auto" outlined>
-        <v-card-title>{{ todo.title }}</v-card-title>
-        <v-card-text>
-          {{ todo.task }}
-        </v-card-text>
-        <v-card-actions>
-          <v-btn
-            icon
-            color="indigo"
-            @click="editTodo(todo.id, todo.title, todo.task)"
-          >
-            <v-icon>mdi-pen</v-icon>
-          </v-btn>
-          <v-btn icon color="red" @click="deleteTodo(todo.id)">
-            <v-icon>mdi-delete</v-icon>
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </div>
-  </v-card> -->
   <v-dialog v-model="dialogCompose" width="500">
     <v-card>
       <v-card-title class="headline black" primary-title>
@@ -85,7 +58,6 @@
             v-model="updateTask"
             @keyup.enter="updateTodo"
           ></v-textarea>
-
           <ErrorMessage :err_show="err_show" :err_message="err_message" />
         </v-form>
       </v-card-text>
@@ -106,8 +78,6 @@ import { doc, deleteDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase/init";
 import ErrorMessage from "./ErrorMessage.vue";
 
-import { toast } from "vue3-toastify";
-import "vue3-toastify/dist/index.css";
 export default {
   // eslint-disable-next-line vue/multi-word-component-names
   name: "Card",
@@ -117,14 +87,7 @@ export default {
   props: {
     todosList: Array,
   },
-  setup() {
-    const notify = (msg) => {
-      toast.success(msg, {
-        autoClose: 1000,
-      }); // ToastOptions
-    };
-    return { notify };
-  },
+
   data() {
     return {
       dialogCompose: false,
@@ -133,6 +96,7 @@ export default {
       todoId: "",
       err_show: false,
       err_message: "",
+      snackbar: false,
     };
   },
   methods: {
@@ -155,7 +119,8 @@ export default {
 
         this.dialogCompose = false;
         this.err_show = false;
-        this.notify("Todo updated...✨");
+        this.snackbar = true;
+        this.err_message = "Todo updated...😉";
       } else if (this.updateTitle == "" || this.updateTask == "") {
         console.log("can not blank");
         this.err_show = true;
@@ -168,7 +133,8 @@ export default {
 
       deleteDoc(docRef).then(() => {
         console.log("deleted");
-        this.notify("Todo deleted...✌");
+        this.snackbar = true;
+        this.err_message = "Todo deleted...✌";
       });
     },
     editTodo(id, title, task) {
@@ -190,25 +156,4 @@ export default {
 </script>
 
 <style>
-.cards {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  gap: 1rem;
-  grid-auto-rows: 1fr;
-}
-
-/* Screen larger than 600px? 2 column */
-@media (min-width: 600px) {
-  .cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* Screen larger than 900px? 3 columns */
-@media (min-width: 900px) {
-  .cards {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
 </style>
