@@ -16,7 +16,10 @@
         cols="12"
         sm="4"
       >
-        <v-card>
+        <v-card
+          class="h-100 d-flex flex-column justify-space-between"
+          variant="outlined"
+        >
           <v-card-title class="text-wrap">{{ todo.title }}</v-card-title>
           <v-card-text> {{ todo.task }} </v-card-text>
           <v-card-actions>

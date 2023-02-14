@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar app color="indigo" dark flat class="px-5">
+  <v-app-bar app color="indigo" dark flat class="px-md-16 px-2">
     <v-btn>
       <router-link to="/">TODO</router-link>
     </v-btn>

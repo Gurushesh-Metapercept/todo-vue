@@ -5,8 +5,11 @@
     <!--  Add TODO Button  -->
     <div class="wrapper">
       <v-container class="my-auto">
-        <v-row>
-          <v-btn class="mx-auto" color="indigo" @click="compose({})"
+        <v-row
+          class="d-flex justify-center justify-md-end mx-auto"
+          style="max-width: 1200px"
+        >
+          <v-btn class="text-button" color="indigo" @click="compose({})"
             >Add Todo</v-btn
           >
         </v-row>
