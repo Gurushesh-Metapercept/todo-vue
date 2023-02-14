@@ -50,7 +50,7 @@
       </v-dialog>
     </div>
     <!-- Erro Message Component  -->
-    <ErrorMessage :success_show="success_show" :err_message="err_message" />
+    <!-- <ErrorMessage :success_show="success_show" :err_message="err_message" /> -->
 
     <!-- Todo Card Component  -->
 
@@ -72,6 +72,8 @@ import ErrorMessage from "@/components/ErrorMessage.vue";
 import { auth, db } from "../firebase/init";
 import { collection, addDoc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged } from "@firebase/auth";
+import { toast } from "vue3-toastify";
+import "vue3-toastify/dist/index.css";
 
 export default {
   components: {
@@ -92,6 +94,14 @@ export default {
       displayEmail: "",
     };
   },
+  setup() {
+    const notify = (msg) => {
+      toast.success(msg, {
+        autoClose: 1000,
+      }); // ToastOptions
+    };
+    return { notify };
+  },
   methods: {
     async addTodo() {
       console.log("add todo function");
@@ -103,10 +113,11 @@ export default {
         });
         this.newTodo = "";
         this.newTask = "";
-        this.err_message = "New todo created ✨";
+        // this.err_message = "New todo created ✨";
         this.err_show = false;
-        this.success_show = true;
+        // this.success_show = true;
         this.dialogCompose = false;
+        this.notify("New todo created...😉");
       } else if (
         (this.newTodo != "" && this.newTask == "") ||
         (this.newTodo == "" && this.newTask != "") ||

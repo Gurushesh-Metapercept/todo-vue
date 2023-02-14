@@ -168,6 +168,7 @@ export default {
 
       deleteDoc(docRef).then(() => {
         console.log("deleted");
+        this.notify("Todo deleted...✌");
       });
     },
     editTodo(id, title, task) {
