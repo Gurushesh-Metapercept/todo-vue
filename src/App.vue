@@ -20,10 +20,10 @@ export default {
 
   setup() {
     const router = useRouter();
-    // const route = useRoute();
     const auth = getAuth();
 
     onBeforeMount(() => {
+      // if user is not logged in then redirect user to "/" login page
       onAuthStateChanged(auth, (user) => {
         if (!user) {
           router.replace("/");

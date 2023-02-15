@@ -1,14 +1,13 @@
 <template>
-  <v-app-bar app color="indigo" dark flat class="px-md-16 px-2">
+  <v-app-bar app color="blue-grey-darken-3" dark flat class="px-md-16 px-2">
+    <!-- Logo -->
     <v-btn>
       <router-link to="/">TODO</router-link>
     </v-btn>
     <v-spacer></v-spacer>
-
-    <router-link to="/logout">
-      <v-btn class="white--text" rounded to="/" @click="handleLogOut">
-        Logout
-      </v-btn>
+    <!-- Logout  -->
+    <router-link to="/">
+      <v-btn class="white--text" to="/" @click="handleLogOut"> Logout </v-btn>
     </router-link>
   </v-app-bar>
 </template>
@@ -24,6 +23,7 @@ export default {
     };
   },
   methods: {
+    // Logout Method
     handleLogOut() {
       const auth = getAuth();
       signOut(auth)

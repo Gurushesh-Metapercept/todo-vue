@@ -1,6 +1,9 @@
 <template>
   <v-card class="mx-auto py-10 px-10 mt-10" max-width="500" outlined>
+    <!-- Error Message  -->
     <ErrorMessage :err_show="err_show" :err_message="err_message" />
+
+    <!-- Login Form  -->
     <v-form v-model="formValidation">
       <v-card-title>Login</v-card-title>
       <v-text-field
@@ -14,12 +17,10 @@
 
       <v-text-field
         v-model="password"
-        :append-inner-icon="show1 ? 'mdi-eye' : 'mdi-eye-off'"
-        :rules="[rules.required, rules.min]"
+        :append-inner-icon="showPass ? 'mdi-eye' : 'mdi-eye-off'"
+        :rules="[rules.required]"
         :type="showPass ? 'text' : 'password'"
-        name="input-10-1"
         label="Password"
-        hint="At least 6 characters"
         counter
         @click:append-inner="showPass = !showPass"
       ></v-text-field>
@@ -27,6 +28,8 @@
     <div class="ms-4 text-end">
       <router-link to="/register">Don't have account?</router-link>
     </div>
+
+    <!-- Login Button  -->
     <v-card-actions>
       <v-btn :disabled="!formValidation" elevation="1" @click="login"
         >Login</v-btn
@@ -58,11 +61,6 @@ export default {
       formValidation: false,
       rules: {
         required: (value) => !!value || "Required is requred.",
-        min: (v) => v.length >= 6 || "Min 6 characters",
-        passCheck: () =>
-          this.confirmPassword != this.password
-            ? "Password does not match"
-            : "",
       },
       emailRules: [
         (value) => {
@@ -80,6 +78,7 @@ export default {
   },
 
   methods: {
+    //  Login Method
     login() {
       signInWithEmailAndPassword(auth, this.email, this.password)
         .then(() => {
@@ -90,7 +89,6 @@ export default {
         .catch((err) => {
           console.log(err.message);
           this.err_message = err.message;
-          console.log(err.message);
           this.err_show = true;
         });
     },
