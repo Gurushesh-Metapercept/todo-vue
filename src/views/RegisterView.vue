@@ -1,6 +1,9 @@
 <template>
   <v-card class="mx-auto py-10 px-10 mt-10" max-width="500" outlined>
+    <!-- Error Message  -->
     <ErrorMessage :err_show="err_show" :err_message="err_message" />
+
+    <!-- Register Form  -->
     <v-form v-model="formValidation">
       <v-card-title>Register</v-card-title>
       <v-text-field
@@ -16,10 +19,10 @@
         class="text__Field"
         v-model="password"
         :append-inner-icon="showPass ? 'mdi-eye' : 'mdi-eye-off'"
-        :rules="[rules.required, rules.min]"
+        :rules="passwordRules"
         :type="showPass ? 'text' : 'password'"
         label="Password"
-        hint="At least 6 characters"
+        :hint="passwordRulesHint"
         counter
         @click:append-inner="showPass = !showPass"
       ></v-text-field>
@@ -31,13 +34,14 @@
         :rules="conPass"
         :type="showConPass ? 'text' : 'password'"
         label="Confirm Password"
-        hint="At least 6 characters"
         counter
         @click:append-inner="showConPass = !showConPass"
       ></v-text-field>
       <div class="ms-4 text-end">
         <router-link to="/">Want to login?</router-link>
       </div>
+
+      <!-- Register Button -->
       <v-card-actions>
         <v-btn :disabled="!formValidation" elevation="1" @click="register"
           >Register</v-btn
@@ -45,20 +49,9 @@
       </v-card-actions>
     </v-form>
   </v-card>
-  <!-- notification -->
-  <v-snackbar v-model="snackbar" :timeout="2000" color="success">
-    {{ this.err_message }}
-    <template v-slot:actions>
-      <v-btn color="white" variant="text" @click="snackbar = false">
-        Close
-      </v-btn>
-    </template>
-  </v-snackbar>
 </template>
  
  <script>
-// import { createUserWithEmailAndPassword } from "@firebase/auth";
-// import { auth } from "../firebase/init";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase/init";
 import router from "@/router";
@@ -82,15 +75,22 @@ export default {
       showPass: false,
       formValidation: false,
       showConPass: false,
-      snackbar: false,
+      passwordRulesHint:
+        "Password must contain uppercase, lowercase letter, one special symbol, one number and must be at least 6 characters long",
+
+      //  Validation Rules
       rules: {
         required: (value) => !!value || "Required is requred.",
         min: (v) => v.length >= 6 || "Min 6 characters",
       },
+
+      // Confirm Password Rules
       conPass: [
         (v) => !!v || "Required is requred.",
         (v) => v === this.password || "Passwords do not match",
       ],
+
+      // Email Validation Rules
       emailRules: [
         (value) => {
           if (value) return true;
@@ -103,16 +103,34 @@ export default {
           return "E-mail must be valid.";
         },
       ],
+
+      // Password Validation Rules
+      passwordRules: [
+        (value) => !!value || "Password is required",
+        (value) =>
+          (value && value.length >= 6) ||
+          "Password must be at least 6 characters",
+        (value) =>
+          /(?=.*\d)/.test(value) || "Password must contain at least one number",
+        (value) =>
+          /(?=.*[A-Z])/.test(value) ||
+          "Password must contain at least one uppercase letter",
+        (value) =>
+          /(?=.*[a-z])/.test(value) ||
+          "Password must contain at least one lowercase letter",
+        (value) =>
+          /(?=.*[!@#$%^&*])/.test(value) ||
+          "Password must contain at least one special symbol",
+      ],
     };
   },
   methods: {
+    // Register User Function
     register() {
       createUserWithEmailAndPassword(auth, this.email, this.password)
         .then((credential) => {
           this.err_show = false;
           console.log(credential);
-          this.snackbar = true;
-          this.err_message = "Account successfully created...✨";
           router.push("/");
         })
         .catch((err) => {
@@ -124,6 +142,6 @@ export default {
   },
 };
 </script>
- 
- <style scoped>
+
+<style scoped>
 </style>
