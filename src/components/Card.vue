@@ -1,12 +1,4 @@
 <template>
-  <v-snackbar v-model="snackbar" :timeout="2000" color="success">
-    {{ this.err_message }}
-    <template v-slot:actions>
-      <v-btn color="white" variant="text" @click="snackbar = false">
-        Close
-      </v-btn>
-    </template>
-  </v-snackbar>
   <v-container>
     <v-row style="max-width: 1200px" class="mx-auto">
       <v-col
@@ -16,20 +8,38 @@
         cols="12"
         sm="4"
       >
-        <v-card
-          class="h-100 d-flex flex-column justify-space-between"
-          variant="outlined"
-        >
+        <v-card class="h-100 d-flex flex-column justify-space-between">
           <v-card-title class="text-wrap">{{ todo.title }}</v-card-title>
+          <v-divider></v-divider>
+          <!-- date and time  -->
+          <v-card-subtitle class="mt-2" v-if="todo.createdAt != null"
+            >{{
+              todo.createdAt.toDate().toLocaleString("en-us", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+            }}
+            -
+            {{
+              todo.createdAt.toDate().getHours() +
+              ":" +
+              todo.createdAt.toDate().getMinutes()
+            }}
+          </v-card-subtitle>
+
           <v-card-text> {{ todo.task }} </v-card-text>
+
           <v-card-actions>
+            <!-- Edit Todo Button  -->
             <v-btn
               icon
-              color="indigo"
+              color="blue-grey-darken-3"
               @click="editTodo(todo.id, todo.title, todo.task)"
             >
               <v-icon>mdi-pen</v-icon>
             </v-btn>
+            <!-- Delete Button  -->
             <v-btn icon color="red" @click="deleteTodo(todo.id)">
               <v-icon>mdi-delete</v-icon>
             </v-btn>
@@ -38,47 +48,64 @@
       </v-col>
     </v-row>
   </v-container>
+
+  <!-- Update Todo Pop Up  -->
   <v-dialog v-model="dialogCompose" width="500">
     <v-card>
       <v-card-title class="headline black" primary-title>
-        Update todo
+        Edit todo
       </v-card-title>
       <v-card-text class="pa-5">
+        <!-- Update todo form  -->
         <v-form>
           <v-text-field
             label="Title *"
-            :rules="rules"
             hide-details="auto"
             class="mb-2"
             v-model="updateTitle"
-            @keyup.enter="updateTodo"
           ></v-text-field>
           <v-textarea
             outlined
             name="input-7-4"
             label="Task *"
-            :rules="rules"
             v-model="updateTask"
-            @keyup.enter="updateTodo"
           ></v-textarea>
+
+          <!-- Error comp while updating todo -->
           <ErrorMessage :err_show="err_show" :err_message="err_message" />
         </v-form>
       </v-card-text>
+
+      <!-- Cancel and Update Button  -->
       <v-card-actions class="pa-5">
         <v-btn class="ml-auto" @click="cancelPop()" outlined color="red"
           >Cancel</v-btn
         >
-        <v-btn color="indigo" class="custom_btn" @click="updateTodo()">
+        <v-btn
+          color="blue-grey-darken-3"
+          class="custom_btn"
+          @click="updateTodo"
+        >
           Update
         </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <!-- Notification Popup -->
+  <v-snackbar v-model="snackbar" :timeout="2000" color="success">
+    {{ this.err_message }}
+    <template v-slot:actions>
+      <v-btn color="white" variant="text" @click="snackbar = false">
+        Close
+      </v-btn>
+    </template>
+  </v-snackbar>
 </template>
 
 <script>
-import { doc, deleteDoc, setDoc } from "firebase/firestore";
-import { db } from "../firebase/init";
+import { doc, deleteDoc, collection, updateDoc } from "firebase/firestore";
+import { auth, db } from "../firebase/init";
 import ErrorMessage from "./ErrorMessage.vue";
 
 export default {
@@ -103,51 +130,70 @@ export default {
     };
   },
   methods: {
+    // Update todo function
     async updateTodo() {
       if (this.updateTitle != "" && this.updateTask != "") {
-        const docRef = doc(db, "todos", this.todoId);
+        const user = auth.currentUser;
+        if (user) {
+          const userId = user.uid;
+          const usersRef = collection(db, "users");
+          const userDocRef = doc(usersRef, userId);
+          const todosRef = collection(userDocRef, "todos");
+          const todoDocRef = doc(todosRef, this.todoId);
 
-        const uData = await {
-          title: this.updateTitle,
-          task: this.updateTask,
-        };
-
-        setDoc(docRef, uData)
-          .then((docRef) => {
-            console.log("todo updated...", docRef);
+          // Update the todo document
+          updateDoc(todoDocRef, {
+            title: this.updateTitle,
+            task: this.updateTask,
           })
-          .catch((err) => {
-            console.log(err);
-          });
-
-        this.dialogCompose = false;
-        this.err_show = false;
-        this.snackbar = true;
-        this.err_message = "Todo updated...😉";
+            .then(() => {
+              console.log("Todo updated successfully");
+              this.dialogCompose = false;
+              this.err_show = false;
+              this.snackbar = true;
+              this.err_message = "Todo updated...😉";
+            })
+            .catch((error) => {
+              console.error("Error updating todo: ", error);
+            });
+        }
       } else if (this.updateTitle == "" || this.updateTask == "") {
         console.log("can not blank");
         this.err_show = true;
         this.err_message = "Field cannot be blank";
       }
     },
-    deleteTodo(id) {
-      console.log(id);
-      const docRef = doc(db, "todos", id);
+    // Delete Todo by id
+    deleteTodo(todoId) {
+      const user = auth.currentUser;
+      if (user) {
+        const userId = user.uid;
+        const usersRef = collection(db, "users");
+        const userDocRef = doc(usersRef, userId);
+        const todosRef = collection(userDocRef, "todos");
+        const todoDocRef = doc(todosRef, todoId);
 
-      deleteDoc(docRef).then(() => {
-        console.log("deleted");
-        this.snackbar = true;
-        this.err_message = "Todo deleted...✌";
-      });
+        deleteDoc(todoDocRef)
+          .then(() => {
+            console.log("Todo deleted");
+            this.snackbar = true;
+            this.err_message = "Todo deleted...✌";
+          })
+          .catch((error) => {
+            console.error("Error deleting todo: ", error);
+          });
+      }
     },
-    editTodo(id, title, task) {
-      console.log(id, title, task);
-      (this.dialogCompose = true), console.log(id);
 
+    // Edit Todo Function
+    editTodo(id, title, task) {
+      this.dialogCompose = true;
       this.updateTitle = title;
       this.updateTask = task;
       this.todoId = id;
     },
+
+    // Update Todo Popup
     compose() {
       this.dialogCompose = true;
     },
@@ -157,6 +203,5 @@ export default {
   },
 };
 </script>
-
 <style>
 </style>
