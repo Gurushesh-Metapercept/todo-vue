@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app class="bg-grey-lighten-5">
     <!-- Header  -->
     <Header />
     <!--  Add TODO Button  -->
@@ -9,9 +9,14 @@
           class="d-flex justify-center justify-md-end mx-auto"
           style="max-width: 1200px"
         >
-          <v-btn class="text-button" color="indigo" @click="compose({})"
-            >Add Todo</v-btn
-          >
+          <v-btn
+            inline-block
+            max-width="100px"
+            color="blue-grey-darken-3"
+            @click="compose({})"
+            >New
+            <v-icon icon="mdi-plus"></v-icon>
+          </v-btn>
         </v-row>
       </v-container>
 
@@ -25,19 +30,15 @@
             <v-form>
               <v-text-field
                 label="Title *"
-                :rules="rules"
                 hide-details="auto"
                 class="mb-2"
                 v-model="newTodo"
-                @keyup.enter="addTodo"
               ></v-text-field>
               <v-textarea
                 outlined
                 name="input-7-4"
                 label="Task *"
                 v-model="newTask"
-                :rules="rules"
-                @keyup.enter="addTodo"
               ></v-textarea>
               <ErrorMessage :err_show="err_show" :err_message="err_message" />
             </v-form>
@@ -46,28 +47,30 @@
             <v-btn class="ml-auto" @click="cancelPop()" outlined color="red"
               >Cancel</v-btn
             >
-
-            <v-btn color="indigo" class="custom_btn" @click="addTodo">
+            <v-btn
+              color="blue-grey-darken-3"
+              class="custom_btn"
+              @click="addTodo"
+            >
               Add
             </v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
     </div>
-    <!-- Erro Message Component  -->
-    <!-- <ErrorMessage :success_show="success_show" :err_message="err_message" /> -->
 
-    <!-- Todo Card Component  -->
-
+    <!-- Loading Circle  -->
     <v-progress-circular
       v-if="loading"
       indeterminate
       color="primary"
       class="mx-auto"
     ></v-progress-circular>
-    <Card v-else :todosList="todosList" />
 
-    <!-- notification -->
+    <!-- Todo Card Component  -->
+    <Card :todosList="todosList" />
+
+    <!-- Notification -->
     <v-snackbar v-model="snackbar" :timeout="2000" color="success">
       {{ this.err_message }}
       <template v-slot:actions>
@@ -85,7 +88,14 @@ import Card from "../components/Card.vue";
 import ErrorMessage from "@/components/ErrorMessage.vue";
 
 import { auth, db } from "../firebase/init";
-import { collection, addDoc, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  serverTimestamp,
+  doc,
+  query,
+} from "firebase/firestore";
 import { onAuthStateChanged } from "@firebase/auth";
 
 export default {
@@ -100,31 +110,51 @@ export default {
       newTodo: "",
       newTask: "",
       err_show: false,
-      // success_show: false,
       err_message: "",
       dialogCompose: false,
       loading: true,
-      displayEmail: "",
       snackbar: false,
     };
   },
 
   methods: {
+    // Add Todo Method
     async addTodo() {
       console.log("add todo function");
       if (this.newTodo != "" && this.newTask != "") {
-        // this.todosList.push({ title: this.newTodo, task: this.newTask });
-        await addDoc(collection(db, "todos"), {
-          title: this.newTodo,
-          task: this.newTask,
-        });
-        this.newTodo = "";
-        this.newTask = "";
-        // this.success_show = true;
-        this.err_show = false;
-        this.dialogCompose = false;
-        this.snackbar = true;
-        this.err_message = "New todo created ✨";
+        // Check if a user is logged in
+        const user = auth.currentUser;
+        if (user) {
+          const userId = user.uid;
+
+          // Create a reference to the "users" collection
+          const usersRef = collection(db, "users");
+
+          // Create a reference to the document with the current user's ID
+          const userDocRef = doc(usersRef, userId);
+
+          // Create a reference to the "todos" subcollection within the user's document
+          const todosRef = collection(userDocRef, "todos");
+
+          // Store a new todo in the "todos" subcollection
+          await addDoc(todosRef, {
+            title: this.newTodo,
+            task: this.newTask,
+            createdAt: serverTimestamp(),
+          })
+            .then((docRef) => {
+              console.log("Todo stored with ID: ", docRef.id);
+              this.newTask = "";
+              this.newTodo = "";
+              this.err_show = false;
+              this.dialogCompose = false;
+              this.snackbar = true;
+              this.err_message = "New todo created ✨";
+            })
+            .catch((error) => {
+              console.error("Error storing todo: ", error);
+            });
+        }
       } else if (
         (this.newTodo != "" && this.newTask == "") ||
         (this.newTodo == "" && this.newTask != "") ||
@@ -135,6 +165,8 @@ export default {
         this.err_show = true;
       }
     },
+
+    // For Add Todo PopUp
     compose() {
       this.dialogCompose = true;
     },
@@ -142,35 +174,30 @@ export default {
       this.dialogCompose = false;
     },
   },
-  async mounted() {
-    let currentUser = localStorage.getItem("currentUser");
-    console.log("currentUser" + currentUser);
-    onSnapshot(collection(db, "todos"), (snapshot) => {
-      const tt = [];
-      snapshot.forEach((doc) => {
-        const todoz = {
-          ...doc.data(),
-          id: doc.id,
-        };
-        tt.push(todoz);
-      });
-      (this.loading = false), (this.todosList = tt);
-    });
 
+  async mounted() {
+    // Fetching realtime todos from firestore
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log("uid == " + user.uid);
-        console.log(user);
-      } else {
-        // User is signed out
-        // ...
+        const userId = user.uid;
+        const usersRef = collection(db, "users");
+        const userDocRef = doc(usersRef, userId);
+        const todosRef = collection(userDocRef, "todos");
+        const q = query(todosRef);
+        onSnapshot(q, (snapshot) => {
+          const todos = [];
+          snapshot.forEach((doc) => {
+            const todo = {
+              id: doc.id,
+              ...doc.data(),
+            };
+            todos.push(todo);
+          });
+          this.todosList = todos;
+          this.loading = false;
+        });
       }
     });
-  },
-  created() {
-    setTimeout(() => {
-      this.success_show = false;
-    }, 100);
   },
 };
 </script>
@@ -178,9 +205,5 @@ export default {
 <style>
 .wrapper {
   margin: 6rem;
-}
-.custom_error {
-  margin-top: -5rem;
-  max-height: 100px;
 }
 </style>
